@@ -1,0 +1,19 @@
+# Claude Code session files
+.claude/
+
+# Playwright MCP session artifacts
+.playwright-mcp/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Editor / IDE
+.idea/
+.vscode/
+*.iml
+
+# Local testing artifacts
+bot-check-test.png
+*-test.png
+*.log

@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>shopunrush bot-check</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #1a1a1a;
+    background: #f7f7f5;
+    margin: 0;
+    padding: 32px 20px;
+  }
+  .container { max-width: 760px; margin: 0 auto; }
+  header { margin-bottom: 32px; }
+  h1 { margin: 0 0 6px; font-size: 28px; font-weight: 600; letter-spacing: -0.5px; }
+  header p { margin: 0; color: #666; font-size: 15px; }
+  section {
+    background: #fff;
+    border: 1px solid #e5e3df;
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+  }
+  h2 {
+    margin: 0 0 14px;
+    font-size: 17px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .verdict {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 999px;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+  }
+  .v-ok { background: #e6f4ea; color: #1e7e34; }
+  .v-warn { background: #fff4e0; color: #a06a00; }
+  .v-bad { background: #fde8e8; color: #b21f1f; }
+  .v-pending { background: #eee; color: #666; }
+  .row {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 8px 16px;
+    padding: 6px 0;
+    font-size: 14px;
+    border-top: 1px solid #f0eeeb;
+  }
+  .row:first-of-type { border-top: none; }
+  .row .label { color: #666; }
+  .row .value { color: #1a1a1a; font-variant-numeric: tabular-nums; word-break: break-word; }
+  .row .value.problem { color: #b21f1f; font-weight: 500; }
+  .row .value.note { color: #a06a00; font-weight: 500; }
+  .row .value.good { color: #1e7e34; }
+  .row .value.muted { color: #999; }
+  .controls {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+  }
+  button {
+    font: inherit;
+    padding: 10px 18px;
+    border: 1px solid #1a1a1a;
+    background: #1a1a1a;
+    color: #fff;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+  }
+  button:hover { background: #333; }
+  button.secondary {
+    background: #fff;
+    color: #1a1a1a;
+  }
+  button.secondary:hover { background: #f0eeeb; }
+  textarea {
+    width: 100%;
+    min-height: 280px;
+    padding: 14px;
+    font: 12px/1.55 ui-monospace, "SF Mono", Menlo, Monaco, monospace;
+    border: 1px solid #e5e3df;
+    border-radius: 8px;
+    background: #fafafa;
+    resize: vertical;
+  }
+  .footnote { font-size: 12px; color: #888; margin-top: 14px; }
+  a { color: #1a3eb2; }
+  .indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+  .i-ok { background: #2eb24a; }
+  .i-warn { background: #e08a00; }
+  .i-bad { background: #d12c2c; }
+  .i-pending { background: #ccc; animation: pulse 1.4s infinite; }
+  @keyframes pulse { 50% { opacity: 0.4; } }
+  .copy-flash {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #1a1a1a;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    opacity: 0;
+    transition: all 0.2s;
+    pointer-events: none;
+  }
+  .copy-flash.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  details { margin-top: 12px; font-size: 13px; }
+  details summary { color: #666; cursor: pointer; }
+  details summary:hover { color: #1a1a1a; }
+  details p { color: #555; margin: 8px 0 0; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>shopunrush bot-check</h1>
+    <p>Diagnose why Cloudflare may be challenging you on shopunrush.com. Hand the report to Shopify support.</p>
+  </header>
+
+  <section>
+    <h2>Your network <span id="v-network" class="verdict v-pending">checking</span></h2>
+    <div class="row"><div class="label">Your IP address</div><div id="r-ip" class="value muted">…</div></div>
+    <div class="row"><div class="label">Country / city</div><div id="r-geo" class="value muted">…</div></div>
+    <div class="row"><div class="label">Internet provider</div><div id="r-isp" class="value muted">…</div></div>
+    <div class="row"><div class="label">Network type</div><div id="r-asn" class="value muted">…</div></div>
+    <div class="row"><div class="label">VPN / Proxy</div><div id="r-vpn" class="value muted">…</div></div>
+    <details>
+      <summary>What this means</summary>
+      <p>Cloudflare looks at your IP, ISP, and whether you're on a VPN/proxy to score how "human" you look. Visitors on rare ISPs, datacenter IPs, or known VPN exit nodes get challenged more often.</p>
+    </details>
+  </section>
+
+  <section>
+    <h2>IP reputation <span id="v-reputation" class="verdict v-pending">checking</span></h2>
+    <div class="row"><div class="label">Hostname</div><div id="r-hostname" class="value muted">…</div></div>
+    <div class="row"><div class="label">Datacenter IP?</div><div id="r-datacenter" class="value muted">…</div></div>
+    <div class="row"><div class="label">Known proxy?</div><div id="r-proxy" class="value muted">…</div></div>
+    <div class="row"><div class="label">Look up on abuseipdb</div><div id="r-abuse-link" class="value muted">…</div></div>
+    <details>
+      <summary>What this means</summary>
+      <p>If your IP is on a public abuse list — or someone else on your ISP recently misbehaved — Cloudflare may treat your traffic as suspicious. The abuseipdb link opens a free check page for your IP.</p>
+    </details>
+  </section>
+
+  <section>
+    <h2>Browser environment <span id="v-browser" class="verdict v-pending">checking</span></h2>
+    <div class="row"><div class="label">Browser</div><div id="r-browser" class="value">…</div></div>
+    <div class="row"><div class="label">Operating system</div><div id="r-os" class="value">…</div></div>
+    <div class="row"><div class="label">Language</div><div id="r-lang" class="value">…</div></div>
+    <div class="row"><div class="label">Timezone</div><div id="r-tz" class="value">…</div></div>
+    <div class="row"><div class="label">Screen</div><div id="r-screen" class="value">…</div></div>
+    <div class="row"><div class="label">Do Not Track</div><div id="r-dnt" class="value">…</div></div>
+    <div class="row"><div class="label">Cookies enabled</div><div id="r-cookies" class="value">…</div></div>
+    <div class="row"><div class="label">Private / Incognito mode</div><div id="r-private" class="value muted">…</div></div>
+    <div class="row"><div class="label">Ad-blocker detected</div><div id="r-adblock" class="value muted">…</div></div>
+    <details>
+      <summary>What this means</summary>
+      <p>Cloudflare's bot score is partly built from your browser. Strict privacy settings, ad-blockers, private browsing, and unusual fingerprint signals can lower the score and trigger challenges. None of this is "wrong" — just useful context.</p>
+    </details>
+  </section>
+
+  <section>
+    <h2>Site reachability test <span id="v-site" class="verdict v-pending">checking</span></h2>
+    <div class="row"><div class="label">shopunrush.com</div><div id="r-shopunrush" class="value muted">…</div></div>
+    <div class="row"><div class="label">DNS / Cloudflare edge</div><div id="r-cf" class="value muted">…</div></div>
+    <div class="row"><div class="label">Time to first byte</div><div id="r-ttfb" class="value muted">…</div></div>
+    <div class="row"><div class="label">Challenge detected?</div><div id="r-challenge" class="value muted">…</div></div>
+    <details>
+      <summary>What this means</summary>
+      <p>Fetches shopunrush.com from your browser right now. If it gets challenged, hangs, or fails — this captures the evidence. The browser can't see Cloudflare's full response from a cross-origin fetch, but we can detect timing, redirects, and whether the request completes.</p>
+    </details>
+  </section>
+
+  <section>
+    <h2>Diagnostic report</h2>
+    <p style="color: #666; margin: 0 0 12px; font-size: 14px;">Paste this into your email to Shopify support, or send it to whoever's helping you.</p>
+    <textarea id="reportText" readonly>Running checks…</textarea>
+    <div class="controls">
+      <button id="copyBtn">Copy report</button>
+      <button id="rerunBtn" class="secondary">Re-run all checks</button>
+      <button id="openShopify" class="secondary" onclick="window.open('https://shopunrush.com', '_blank')">Open shopunrush.com</button>
+    </div>
+    <p class="footnote">This tool runs entirely in your browser. Nothing is sent anywhere except the public IP-lookup APIs (ipapi.co, ipwho.is) which only see your IP — same as visiting any website.</p>
+  </section>
+</div>
+
+<div id="flash" class="copy-flash">Copied to clipboard</div>
+
+<script>
+(function() {
+  "use strict";
+
+  // ============ STATE ============
+  const data = {
+    ts: new Date().toISOString(),
+    network: {},
+    reputation: {},
+    browser: {},
+    site: {}
+  };
+
+  // ============ HELPERS ============
+  const $ = id => document.getElementById(id);
+  const set = (id, text, cls) => {
+    const el = $(id);
+    if (!el) return;
+    el.textContent = text;
+    el.classList.remove('muted','problem','note','good');
+    if (cls) el.classList.add(cls);
+  };
+  const verdict = (id, state, label) => {
+    const el = $(id);
+    if (!el) return;
+    el.className = 'verdict v-' + state;
+    el.textContent = label;
+  };
+
+  async function fetchJSON(url, opts = {}) {
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), 8000);
+    try {
+      const res = await fetch(url, { ...opts, signal: ctl.signal });
+      clearTimeout(timer);
+      if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
+      return await res.json();
+    } catch (e) {
+      clearTimeout(timer);
+      throw e;
+    }
+  }
+
+  // ============ NETWORK CHECK ============
+  async function checkNetwork() {
+    let info = null;
+    let source = '';
+
+    // Try ipwho.is first (no rate limits, CORS friendly)
+    try {
+      info = await fetchJSON('https://ipwho.is/');
+      if (info.success === false) info = null;
+      else source = 'ipwho.is';
+    } catch (e) { /* fall through */ }
+
+    // Fallback: ipapi.co
+    if (!info) {
+      try {
+        info = await fetchJSON('https://ipapi.co/json/');
+        if (info.error) info = null;
+        else source = 'ipapi.co';
+      } catch (e) { /* fall through */ }
+    }
+
+    if (!info) {
+      verdict('v-network', 'bad', 'failed');
+      set('r-ip', 'Could not detect — check your internet connection', 'problem');
+      data.network.error = 'Both IP lookup APIs failed';
+      return;
+    }
+
+    // Normalise across the two APIs
+    const ip = info.ip || info.query || '?';
+    const country = info.country_name || info.country || '?';
+    const city = info.city || '?';
+    const region = info.region || info.region_name || '';
+    const isp = info.connection?.isp || info.isp || info.org || info.connection?.org || '?';
+    // Strip leading "AS" so we can prefix it ourselves consistently
+    const rawAsn = info.connection?.asn || info.asn || '?';
+    const asn = String(rawAsn).replace(/^AS/i, '');
+    const asnName = info.connection?.org || info.org || isp;
+    const hostname = info.connection?.domain || info.hostname || '';
+    const isProxy = info.security?.proxy || info.proxy || false;
+    const isHosting = info.security?.hosting || info.hosting || false;
+    const isVpn = info.security?.vpn || info.vpn || false;
+
+    data.network = { ip, country, city, region, isp, asn, asnName, hostname, isProxy, isHosting, isVpn, source };
+
+    set('r-ip', ip, 'good');
+    set('r-geo', city && city !== '?' ? `${city}${region ? ', ' + region : ''}, ${country}` : country);
+    set('r-isp', isp);
+    set('r-asn', `AS${asn} (${asnName})`);
+
+    const vpnFlags = [];
+    if (isProxy) vpnFlags.push('proxy');
+    if (isVpn) vpnFlags.push('VPN');
+    if (isHosting) vpnFlags.push('datacenter / hosting');
+    if (vpnFlags.length) {
+      set('r-vpn', 'Yes — ' + vpnFlags.join(', '), 'problem');
+      data.network.vpnFlags = vpnFlags;
+    } else {
+      set('r-vpn', 'None detected', 'good');
+    }
+
+    // Verdict
+    if (vpnFlags.length) verdict('v-network', 'warn', 'flagged');
+    else verdict('v-network', 'ok', 'normal');
+
+    // Hand off to reputation check
+    return { ip, hostname, isHosting, isProxy, isVpn };
+  }
+
+  // ============ IP REPUTATION ============
+  async function checkReputation(netInfo) {
+    if (!netInfo) {
+      verdict('v-reputation', 'bad', 'skipped');
+      set('r-hostname', '—');
+      set('r-datacenter', '—');
+      set('r-proxy', '—');
+      set('r-abuse-link', '—');
+      return;
+    }
+
+    set('r-hostname', netInfo.hostname || '(not provided)');
+
+    // Datacenter / proxy flags from earlier check
+    if (netInfo.isHosting) {
+      set('r-datacenter', 'Yes — IP belongs to a hosting/datacenter range', 'problem');
+      data.reputation.datacenter = true;
+    } else {
+      set('r-datacenter', 'No — looks like a normal home/mobile IP', 'good');
+      data.reputation.datacenter = false;
+    }
+
+    if (netInfo.isProxy || netInfo.isVpn) {
+      set('r-proxy', 'Yes — known VPN/proxy exit node', 'problem');
+      data.reputation.proxy = true;
+    } else {
+      set('r-proxy', 'No', 'good');
+      data.reputation.proxy = false;
+    }
+
+    // Free, no-auth proxy/risk check via ipwho.is data was already fetched.
+    // Add AbuseIPDB lookup link (manual click — no auth-free API for this)
+    const url = `https://www.abuseipdb.com/check/${encodeURIComponent(netInfo.ip)}`;
+    const el = $('r-abuse-link');
+    el.innerHTML = '';
+    el.classList.remove('muted');
+    const a = document.createElement('a');
+    a.href = url;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    a.textContent = 'Check this IP on AbuseIPDB →';
+    el.appendChild(a);
+    data.reputation.abuseipdbUrl = url;
+
+    // Verdict
+    if (data.reputation.datacenter || data.reputation.proxy) {
+      verdict('v-reputation', 'warn', 'check abuseipdb');
+    } else {
+      verdict('v-reputation', 'ok', 'clean');
+    }
+  }
+
+  // ============ BROWSER ENV ============
+  async function checkBrowser() {
+    const ua = navigator.userAgent;
+    const browser = detectBrowser(ua);
+    const os = detectOS(ua);
+    const lang = navigator.language + (navigator.languages?.length > 1 ? ' (+ ' + (navigator.languages.length - 1) + ' more)' : '');
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const screen = `${window.screen.width}×${window.screen.height} @ ${window.devicePixelRatio}× (window ${window.innerWidth}×${window.innerHeight})`;
+    const dnt = navigator.doNotTrack === '1' || window.doNotTrack === '1' ? 'Enabled' : 'Disabled';
+    const cookies = navigator.cookieEnabled ? 'Yes' : 'No';
+
+    set('r-browser', browser);
+    set('r-os', os);
+    set('r-lang', lang);
+    set('r-tz', tz);
+    set('r-screen', screen);
+    set('r-dnt', dnt, dnt === 'Enabled' ? 'note' : '');
+    set('r-cookies', cookies, cookies === 'No' ? 'problem' : 'good');
+
+    // Private mode heuristic (storage quota)
+    try {
+      if (navigator.storage && navigator.storage.estimate) {
+        const est = await navigator.storage.estimate();
+        const quotaGB = est.quota / 1024 / 1024 / 1024;
+        if (quotaGB < 1) {
+          set('r-private', `Probably yes (storage quota only ${quotaGB.toFixed(2)} GB)`, 'note');
+          data.browser.privateMode = true;
+        } else {
+          set('r-private', 'No', 'good');
+          data.browser.privateMode = false;
+        }
+      } else {
+        set('r-private', 'Cannot determine');
+      }
+    } catch (e) {
+      set('r-private', 'Cannot determine');
+    }
+
+    // Ad-blocker heuristic — try to fetch a known ad-blocker bait URL
+    try {
+      const baitUrl = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
+      const ctl = new AbortController();
+      const timer = setTimeout(() => ctl.abort(), 3000);
+      const res = await fetch(baitUrl, { method: 'HEAD', mode: 'no-cors', signal: ctl.signal });
+      clearTimeout(timer);
+      set('r-adblock', 'No (ad scripts loaded normally)', 'good');
+      data.browser.adblock = false;
+    } catch (e) {
+      set('r-adblock', 'Yes — ad blocker is filtering requests', 'note');
+      data.browser.adblock = true;
+    }
+
+    data.browser = { ...data.browser, ua, browser, os, lang, tz, screen, dnt, cookies };
+
+    // Verdict
+    const concerns = [];
+    if (dnt === 'Enabled') concerns.push('DNT');
+    if (data.browser.privateMode === true) concerns.push('private mode');
+    if (data.browser.adblock === true) concerns.push('ad-blocker');
+    if (concerns.length >= 2) verdict('v-browser', 'warn', concerns.length + ' privacy flags');
+    else if (concerns.length === 1) verdict('v-browser', 'warn', '1 privacy flag');
+    else verdict('v-browser', 'ok', 'normal');
+  }
+
+  function detectBrowser(ua) {
+    const m = (re) => (ua.match(re) || [])[1];
+    if (/Edg\//.test(ua))    return 'Edge ' + m(/Edg\/([\d.]+)/);
+    if (/OPR\//.test(ua))    return 'Opera ' + m(/OPR\/([\d.]+)/);
+    if (/Brave/.test(ua) || (navigator.brave && navigator.brave.isBrave)) return 'Brave';
+    if (/Chrome\//.test(ua)) return 'Chrome ' + m(/Chrome\/([\d.]+)/);
+    if (/Firefox/.test(ua))  return 'Firefox ' + m(/Firefox\/([\d.]+)/);
+    if (/Safari/.test(ua) && /Version/.test(ua)) return 'Safari ' + m(/Version\/([\d.]+)/);
+    return ua.split(' ').pop();
+  }
+  function detectOS(ua) {
+    if (/Windows NT 10/.test(ua)) return 'Windows 10/11';
+    if (/Windows NT ([\d.]+)/.test(ua)) return 'Windows ' + ua.match(/Windows NT ([\d.]+)/)[1];
+    if (/Mac OS X ([\d_.]+)/.test(ua)) return 'macOS ' + ua.match(/Mac OS X ([\d_.]+)/)[1].replace(/_/g,'.');
+    if (/Android ([\d.]+)/.test(ua)) return 'Android ' + ua.match(/Android ([\d.]+)/)[1];
+    if (/iPhone OS ([\d_]+)/.test(ua)) return 'iOS ' + ua.match(/iPhone OS ([\d_]+)/)[1].replace(/_/g,'.');
+    if (/Linux/.test(ua)) return 'Linux';
+    return 'Unknown';
+  }
+
+  // ============ SITE REACHABILITY ============
+  async function checkSite() {
+    const start = performance.now();
+    let outcome = '';
+    let ttfb = null;
+    let challenged = null;
+
+    try {
+      // Use no-cors so we don't get blocked by CORS; we can still tell if it loaded
+      const ctl = new AbortController();
+      const timer = setTimeout(() => ctl.abort(), 15000);
+      const res = await fetch('https://shopunrush.com/?_botcheck=' + Date.now(), {
+        method: 'GET',
+        mode: 'no-cors',
+        cache: 'no-store',
+        credentials: 'omit',
+        signal: ctl.signal
+      });
+      clearTimeout(timer);
+      ttfb = Math.round(performance.now() - start);
+      outcome = 'completed';
+    } catch (e) {
+      ttfb = Math.round(performance.now() - start);
+      if (e.name === 'AbortError') outcome = 'timed out (>15 seconds)';
+      else outcome = 'failed: ' + e.message;
+    }
+
+    set('r-shopunrush', outcome, outcome === 'completed' ? 'good' : 'problem');
+    set('r-ttfb', ttfb !== null ? ttfb + ' ms' : '—');
+    data.site = { outcome, ttfb };
+
+    // Probe Cloudflare edge directly (independent of Shopify)
+    try {
+      const cfRes = await fetch('https://www.cloudflare.com/cdn-cgi/trace', { cache: 'no-store' });
+      const txt = await cfRes.text();
+      const parsed = Object.fromEntries(txt.trim().split('\n').map(l => l.split('=')));
+      set('r-cf', `Cloudflare edge: ${parsed.colo || '?'} (${parsed.loc || '?'})`, 'good');
+      data.site.cfEdge = parsed.colo;
+      data.site.cfLoc = parsed.loc;
+      data.site.cfIp = parsed.ip;
+    } catch (e) {
+      set('r-cf', 'Could not reach Cloudflare edge', 'problem');
+    }
+
+    // Heuristic: was it a challenge?
+    // We can't see the response body in no-cors, but timing > 3s and outcome=completed is suggestive
+    // Better: ask user to look at it themselves
+    if (outcome.startsWith('failed') || outcome.includes('timed out')) {
+      set('r-challenge', 'Possible — request failed/timed out. Try opening shopunrush.com in a new tab.', 'note');
+      challenged = 'possible';
+    } else if (ttfb > 3000) {
+      set('r-challenge', `Possibly — load took ${ttfb} ms (challenges usually take 2-5 sec)`, 'note');
+      challenged = 'maybe';
+    } else {
+      set('r-challenge', 'No — site responded quickly', 'good');
+      challenged = 'no';
+    }
+    data.site.challenged = challenged;
+
+    if (outcome === 'completed' && ttfb < 3000) verdict('v-site', 'ok', 'reachable');
+    else verdict('v-site', 'warn', 'check manually');
+  }
+
+  // ============ REPORT GENERATION ============
+  function buildReport() {
+    const lines = [];
+    const pad = (s, n = 24) => (s + ':').padEnd(n, ' ');
+    lines.push('shopunrush.com bot-check diagnostic');
+    lines.push('Generated: ' + data.ts);
+    lines.push('');
+    lines.push('--- Network ---');
+    lines.push(pad('IP') + (data.network.ip || '?'));
+    lines.push(pad('Country') + (data.network.country || '?'));
+    lines.push(pad('City') + (data.network.city || '?'));
+    lines.push(pad('Region') + (data.network.region || '?'));
+    lines.push(pad('ISP') + (data.network.isp || '?'));
+    lines.push(pad('ASN') + 'AS' + (data.network.asn || '?') + ' (' + (data.network.asnName || '?') + ')');
+    lines.push(pad('Hostname') + (data.network.hostname || '(none)'));
+    if (data.network.vpnFlags?.length) {
+      lines.push(pad('VPN/Proxy flags') + data.network.vpnFlags.join(', '));
+    } else {
+      lines.push(pad('VPN/Proxy') + 'none detected');
+    }
+    lines.push('');
+    lines.push('--- Reputation ---');
+    lines.push(pad('Datacenter IP?') + (data.reputation.datacenter ? 'YES' : 'no'));
+    lines.push(pad('Known proxy?') + (data.reputation.proxy ? 'YES' : 'no'));
+    if (data.reputation.abuseipdbUrl) lines.push(pad('AbuseIPDB lookup') + data.reputation.abuseipdbUrl);
+    lines.push('');
+    lines.push('--- Browser ---');
+    lines.push(pad('Browser') + (data.browser.browser || '?'));
+    lines.push(pad('OS') + (data.browser.os || '?'));
+    lines.push(pad('Language') + (data.browser.lang || '?'));
+    lines.push(pad('Timezone') + (data.browser.tz || '?'));
+    lines.push(pad('Screen') + (data.browser.screen || '?'));
+    lines.push(pad('DNT') + (data.browser.dnt || '?'));
+    lines.push(pad('Cookies') + (data.browser.cookies || '?'));
+    lines.push(pad('Private mode') + (data.browser.privateMode === true ? 'likely' : data.browser.privateMode === false ? 'no' : 'unknown'));
+    lines.push(pad('Ad-blocker') + (data.browser.adblock === true ? 'YES' : data.browser.adblock === false ? 'no' : 'unknown'));
+    lines.push(pad('User-Agent') + (data.browser.ua || ''));
+    lines.push('');
+    lines.push('--- Site test ---');
+    lines.push(pad('shopunrush.com') + (data.site.outcome || '?'));
+    lines.push(pad('Time to response') + (data.site.ttfb !== null ? data.site.ttfb + ' ms' : '—'));
+    lines.push(pad('Cloudflare edge') + (data.site.cfEdge || '?') + ' (' + (data.site.cfLoc || '?') + ')');
+    lines.push(pad('Challenge detected?') + (data.site.challenged || '?'));
+    lines.push('');
+    lines.push('--- Likely flags (why Cloudflare may challenge you) ---');
+    const flags = [];
+    if (data.network.vpnFlags?.length) flags.push('Your IP is flagged as ' + data.network.vpnFlags.join('/'));
+    if (data.reputation.datacenter) flags.push('Your IP is in a datacenter range (unusual for a home user)');
+    if (data.reputation.proxy) flags.push('Your IP is a known proxy/VPN exit node');
+    if (data.browser.adblock) flags.push('You have an ad-blocker active');
+    if (data.browser.privateMode) flags.push('You are likely in private/incognito mode');
+    if (data.browser.dnt === 'Enabled') flags.push('Do-Not-Track is enabled');
+    if (!flags.length) flags.push('No obvious flags — bot management is being aggressive on your store side');
+    flags.forEach(f => lines.push('  • ' + f));
+    return lines.join('\n');
+  }
+
+  function refreshReport() {
+    $('reportText').value = buildReport();
+  }
+
+  // ============ COPY + RERUN ============
+  $('copyBtn').addEventListener('click', async () => {
+    const text = $('reportText').value;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (e) {
+      // Fallback for older browsers
+      $('reportText').select();
+      document.execCommand('copy');
+    }
+    const flash = $('flash');
+    flash.classList.add('show');
+    setTimeout(() => flash.classList.remove('show'), 1600);
+  });
+  $('rerunBtn').addEventListener('click', () => location.reload());
+
+  // ============ ORCHESTRATION ============
+  async function runAll() {
+    const net = await checkNetwork();
+    refreshReport();
+    await checkReputation(net);
+    refreshReport();
+    await checkBrowser();
+    refreshReport();
+    await checkSite();
+    refreshReport();
+  }
+
+  runAll().catch(e => {
+    console.error(e);
+    $('reportText').value = 'Diagnostic failed: ' + e.message + '\n\n' + buildReport();
+  });
+})();
+</script>
+</body>
+</html>
