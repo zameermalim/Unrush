@@ -56,6 +56,19 @@ Summary: X passed, Y failed, Z warning
 
 For each FAIL, add a **User-facing impact** line — what real customers see when this is broken — so the user can prioritize.
 
+## Save the report
+
+Always write the final report to `runs/<YYYY-MM-DD>-<HHMM>-diagnose.md` at the repo root, using current UTC time. Filename pattern keeps runs sortable chronologically.
+
+Include in the file:
+1. Run header (timestamp, tool)
+2. Results table (the 6 checks)
+3. User-facing impact section
+4. Comparison to the 2026-05-13 baseline in `checks.md`
+5. Suggested next actions referencing `UNRUSH-action-plan.md`
+
+Do **not** commit automatically — just write the file. The user will commit when they want a checkpoint.
+
 ## Rules
 
 - **Read-only by default.** Check 5 adds a product to the cart on the live store — abandon the cart (close the page) before finishing, do not check out.

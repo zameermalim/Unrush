@@ -58,6 +58,18 @@ Then a **Findings** section flagging:
 
 Compare against `baseline.md` if it exists. Call out regressions explicitly: "Home requests up from 697 → 820 (+18%) — likely a new app added".
 
+## Save the report
+
+Always write the final report to `runs/<YYYY-MM-DD>-<HHMM>-perf.md` at the repo root, using current UTC time. Filename pattern keeps runs sortable chronologically.
+
+Include in the file:
+1. Run header (timestamp, viewport, tool)
+2. Results table
+3. Findings list
+4. Comparison to `baseline.md`
+
+Do **not** commit automatically — just write the file. The user will commit when they want a checkpoint.
+
 ## Rules
 
 - Test against the live site only — never modify state (no clicking add-to-cart unless the user asks)

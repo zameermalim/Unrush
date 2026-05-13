@@ -10,6 +10,7 @@ Tools and findings for diagnosing performance, checkout, and Cloudflare-challeng
 | `bot-check.html` | Self-contained browser-based diagnostic. When a customer is hit by the Cloudflare "verify you're human" challenge, they open this file to capture their network identity, IP reputation, browser environment, and a live reachability test of shopunrush.com — producing a copyable report for Shopify support. **Live at:** [zameermalim.github.io/Unrush/bot-check.html](https://zameermalim.github.io/Unrush/bot-check.html) |
 | `.claude/skills/unrush-perf/` | Claude Code skill: performance audit across all key pages. Drives Playwright MCP, captures TTFB/FCP/load/weight/resource count, and compares against a saved baseline. Run with: `/unrush-perf` |
 | `.claude/skills/unrush-diagnose/` | Claude Code skill: 6 health checks (GoKwik CORS, Cloudflare challenge, console errors, OTP crash, checkout fallback, theme image widths). Run with: `/unrush-diagnose` |
+| `runs/` | Timestamped reports from each `unrush-perf` and `unrush-diagnose` run. Build a history so you can see when issues changed (e.g. "GoKwik CORS still failing on 13 May, fixed on 18 May"). |
 
 ## How to use `bot-check.html`
 
