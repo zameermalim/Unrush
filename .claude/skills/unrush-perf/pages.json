@@ -1,0 +1,10 @@
+[
+  { "label": "Home",            "url": "https://shopunrush.com/en-international" },
+  { "label": "New",             "url": "https://shopunrush.com/en-international/collections/new-2025" },
+  { "label": "Dresses",         "url": "https://shopunrush.com/en-international/collections/dresses-nov-2024" },
+  { "label": "Bestsellers",     "url": "https://shopunrush.com/en-international/collections/bestsellers-nov-2024" },
+  { "label": "Last Chance",     "url": "https://shopunrush.com/en-international/collections/last-chance" },
+  { "label": "Celebrity Looks", "url": "https://shopunrush.com/en-international/pages/celebrity-looks" },
+  { "label": "Cart",            "url": "https://shopunrush.com/en-international/cart" },
+  { "label": "Product (first from New collection)", "url": "DYNAMIC: pick first /products/ link from New collection" }
+]

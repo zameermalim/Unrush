@@ -1,5 +1,8 @@
-# Claude Code session files
-.claude/
+# Claude Code session files (keep `skills` and `commands` checked in,
+# ignore everything else under .claude/)
+.claude/*
+!.claude/skills/
+!.claude/commands/
 
 # Playwright MCP session artifacts
 .playwright-mcp/

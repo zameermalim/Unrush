@@ -4,10 +4,12 @@ Tools and findings for diagnosing performance, checkout, and Cloudflare-challeng
 
 ## What's in here
 
-| File | Purpose |
+| Path | Purpose |
 |---|---|
 | `UNRUSH-action-plan.md` | Plain-English audit + action plan for the store owner. Covers the Cloudflare challenge, broken GoKwik integration, ~126 MB mobile page weight, and duplicate apps. Includes copy-paste support emails. |
-| `bot-check.html` | Self-contained browser-based diagnostic. When a customer is hit by the Cloudflare "verify you're human" challenge, they open this file to capture their network identity, IP reputation, browser environment, and a live reachability test of shopunrush.com — producing a copyable report for Shopify support. |
+| `bot-check.html` | Self-contained browser-based diagnostic. When a customer is hit by the Cloudflare "verify you're human" challenge, they open this file to capture their network identity, IP reputation, browser environment, and a live reachability test of shopunrush.com — producing a copyable report for Shopify support. **Live at:** [zameermalim.github.io/Unrush/bot-check.html](https://zameermalim.github.io/Unrush/bot-check.html) |
+| `.claude/skills/unrush-perf/` | Claude Code skill: performance audit across all key pages. Drives Playwright MCP, captures TTFB/FCP/load/weight/resource count, and compares against a saved baseline. Run with: `/unrush-perf` |
+| `.claude/skills/unrush-diagnose/` | Claude Code skill: 6 health checks (GoKwik CORS, Cloudflare challenge, console errors, OTP crash, checkout fallback, theme image widths). Run with: `/unrush-diagnose` |
 
 ## How to use `bot-check.html`
 
